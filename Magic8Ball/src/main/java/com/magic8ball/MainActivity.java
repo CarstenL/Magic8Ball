@@ -2,11 +2,18 @@ package com.magic8ball;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.Context;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Vibrator;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.TextView;
 
 import com.magic8ball.util.SystemUiHider;
 
@@ -16,144 +23,116 @@ import com.magic8ball.util.SystemUiHider;
  *
  * @see SystemUiHider
  */
-public class MainActivity extends Activity {
-    /**
-     * Whether or not the system UI should be auto-hidden after
-     * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
-     */
-    private static final boolean AUTO_HIDE = true;
+public class MainActivity extends Activity implements SensorEventListener {
 
-    /**
-     * If {@link #AUTO_HIDE} is set, the number of milliseconds to wait after
-     * user interaction before hiding the system UI.
-     */
-    private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
+    private SensorManager sensorMgr;
+    private Sensor accelerometer;
 
-    /**
-     * If set, will toggle the system UI visibility upon interaction. Otherwise,
-     * will show the system UI visibility upon interaction.
-     */
-    private static final boolean TOGGLE_ON_CLICK = true;
+    private Vibrator vibrator;
 
-    /**
-     * The flags to pass to {@link SystemUiHider#getInstance}.
-     */
-    private static final int HIDER_FLAGS = SystemUiHider.FLAG_HIDE_NAVIGATION;
+    private float last_x = 0;
+    private float last_y = 0;
+    private float last_z = 0;
 
-    /**
-     * The instance of the {@link SystemUiHider} for this activity.
-     */
-    private SystemUiHider mSystemUiHider;
+    private float interval = 300;
+    private float threshold = 1500;
+
+    private long lastUpdate;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_main);
 
-        final View controlsView = findViewById(R.id.fullscreen_content_controls);
-        final View contentView = findViewById(R.id.fullscreen_content);
+        sensorMgr = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        accelerometer = sensorMgr.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
-        // Set up an instance of SystemUiHider to control the system UI for
-        // this activity.
-        mSystemUiHider = SystemUiHider.getInstance(this, contentView, HIDER_FLAGS);
-        mSystemUiHider.setup();
-        mSystemUiHider
-                .setOnVisibilityChangeListener(new SystemUiHider.OnVisibilityChangeListener() {
-                    // Cached values.
-                    int mControlsHeight;
-                    int mShortAnimTime;
-
-                    @Override
-                    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
-                    public void onVisibilityChange(boolean visible) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-                            // If the ViewPropertyAnimator API is available
-                            // (Honeycomb MR2 and later), use it to animate the
-                            // in-layout UI controls at the bottom of the
-                            // screen.
-                            if (mControlsHeight == 0) {
-                                mControlsHeight = controlsView.getHeight();
-                            }
-                            if (mShortAnimTime == 0) {
-                                mShortAnimTime = getResources().getInteger(
-                                        android.R.integer.config_shortAnimTime);
-                            }
-                            controlsView.animate()
-                                    .translationY(visible ? 0 : mControlsHeight)
-                                    .setDuration(mShortAnimTime);
-                        } else {
-                            // If the ViewPropertyAnimator APIs aren't
-                            // available, simply show or hide the in-layout UI
-                            // controls.
-                            controlsView.setVisibility(visible ? View.VISIBLE : View.GONE);
-                        }
-
-                        if (visible && AUTO_HIDE) {
-                            // Schedule a hide().
-                            delayedHide(AUTO_HIDE_DELAY_MILLIS);
-                        }
-                    }
-                });
-
-        // Set up the user interaction to manually show or hide the system UI.
-        contentView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (TOGGLE_ON_CLICK) {
-                    mSystemUiHider.toggle();
-                } else {
-                    mSystemUiHider.show();
-                }
-            }
-        });
-
-        // Upon interacting with UI controls, delay any scheduled hide()
-        // operations to prevent the jarring behavior of controls going away
-        // while interacting with the UI.
-        findViewById(R.id.dummy_button).setOnTouchListener(mDelayHideTouchListener);
+        vibrator = (Vibrator) MainActivity.this.getSystemService(Context.VIBRATOR_SERVICE);
     }
 
     @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
+    public final void onAccuracyChanged(Sensor sensor, int accuracy)
+    {
 
-        // Trigger the initial hide() shortly after the activity has been
-        // created, to briefly hint to the user that UI controls
-        // are available.
-        delayedHide(100);
     }
 
+    @Override
+    public final void onSensorChanged(SensorEvent event)
+    {
+        float x = event.values[0];
+        float y = event.values[1];
+        float z = event.values[2];
 
-    /**
-     * Touch listener to use for in-layout UI controls to delay hiding the
-     * system UI. This is to prevent the jarring behavior of controls going away
-     * while interacting with activity UI.
-     */
-    View.OnTouchListener mDelayHideTouchListener = new View.OnTouchListener() {
-        @Override
-        public boolean onTouch(View view, MotionEvent motionEvent) {
-            if (AUTO_HIDE) {
-                delayedHide(AUTO_HIDE_DELAY_MILLIS);
+        long curTime = System.currentTimeMillis();
+
+        if ((curTime - lastUpdate) > 2000)
+        {
+            TextView tvQuestion = (TextView) findViewById(R.id.tvQuestion);
+            tvQuestion.setText("Frag deine Frage.");
+
+            float speed = StrictMath.abs(x+y+z-last_x-last_y-last_z)/interval * 10000;
+            if (speed > threshold)
+            {
+                tvQuestion.setText("");
+
+                TextView tvSaying;
+                tvSaying = (TextView) findViewById(R.id.tvSaying);
+                tvSaying.setText(getSaying());
+
+                long diffTime = (curTime - lastUpdate);
+                lastUpdate = curTime;
+
+                vibrator.vibrate(200);
             }
-            return false;
         }
-    };
-
-    Handler mHideHandler = new Handler();
-    Runnable mHideRunnable = new Runnable() {
-        @Override
-        public void run() {
-            mSystemUiHider.hide();
+        else
+        {
+            last_x = x;
+            last_y = y;
+            last_z = z;
         }
-    };
+    }
 
-    /**
-     * Schedules a call to hide() in [delay] milliseconds, canceling any
-     * previously scheduled calls.
-     */
-    private void delayedHide(int delayMillis) {
-        mHideHandler.removeCallbacks(mHideRunnable);
-        mHideHandler.postDelayed(mHideRunnable, delayMillis);
+    @Override
+    protected void onResume()
+    {
+        super.onResume();
+        sensorMgr.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+    }
+
+    @Override
+    protected void onPause()
+    {
+        super.onPause();
+        sensorMgr.unregisterListener(this);
+    }
+
+    private String getSaying()
+    {
+        switch ((int)(StrictMath.random() *10))
+        {
+            case 0:
+                return getString(R.string.saying0);
+            case 1:
+                return getString(R.string.saying1);
+            case 2:
+                return getString(R.string.saying2);
+            case 3:
+                return getString(R.string.saying3);
+            case 4:
+                return getString(R.string.saying4);
+            case 5:
+                return getString(R.string.saying5);
+            case 6:
+                return getString(R.string.saying6);
+            case 7:
+                return getString(R.string.saying7);
+            case 8:
+                return getString(R.string.saying8);
+            case 9:
+                return getString(R.string.saying9);
+            default:
+                return "MOEP";
+        }
     }
 }
