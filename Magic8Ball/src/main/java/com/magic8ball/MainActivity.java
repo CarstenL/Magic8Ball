@@ -1,18 +1,13 @@
 package com.magic8ball;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.Vibrator;
-import android.view.MotionEvent;
-import android.view.View;
 import android.widget.TextView;
 
 import com.magic8ball.util.SystemUiHider;
@@ -35,7 +30,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     private float last_z = 0;
 
     private float interval = 300;
-    private float threshold = 1500;
+    private float threshold = 2000;
 
     private long lastUpdate;
 
