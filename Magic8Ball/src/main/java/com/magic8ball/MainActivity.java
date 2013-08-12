@@ -30,7 +30,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     private float last_z = 0;
 
     private float interval = 300;
-    private float threshold = 1500;
+    private float threshold = 2000;
 
     private long lastUpdate;
 
