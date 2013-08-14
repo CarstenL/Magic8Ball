@@ -2,7 +2,15 @@
 <resources>
 
     <string name="app_name">Magic8Ball</string>
-    <string name="dummy_button">Dummy Button</string>
-    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="saying1">Ja</string>
+    <string name="saying2">Nein</string>
+    <string name="saying3">Moep</string>
+    <string name="saying4">Lieber nicht!</string>
+    <string name="saying5">Auf jeden Fall!</string>
+    <string name="saying6">Vielleicht</string>
+    <string name="saying7">Frag später noch mal</string>
+    <string name="saying8">...</string>
+    <string name="saying9">42</string>
+    <string name="saying0">Ich kann dich nicht verstehen</string>
 
 </resources>
