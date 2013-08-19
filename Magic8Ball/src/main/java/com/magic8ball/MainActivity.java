@@ -13,6 +13,8 @@ import android.os.Bundle;
 import android.os.Vibrator;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.AnimationUtils;
 import android.widget.TextView;
 
 import com.magic8ball.util.SystemUiHider;
@@ -33,8 +35,8 @@ public class MainActivity extends Activity implements SensorEventListener {
     private float last_x = 0;
     private float last_y = 0;
     private float last_z = 0;
-    private float interval = 300;
-    private float threshold = 2000;
+    private float interval = 150;
+    private float threshold = 1500;
     private long lastUpdate;
 
     @Override
@@ -72,15 +74,31 @@ public class MainActivity extends Activity implements SensorEventListener {
         long curTime = System.currentTimeMillis();
 
         if ((curTime - lastUpdate) > 2000) {
-            TextView tvQuestion = (TextView) findViewById(R.id.tvQuestion);
 
             float speed = StrictMath.abs(x + y + z - last_x - last_y - last_z) / interval * 10000;
             if (speed > threshold) {
-                tvQuestion.setText("");
 
-                TextView tvSaying;
-                tvSaying = (TextView) findViewById(R.id.tvSaying);
-                tvSaying.setText(getSaying());
+                //load the message text to the view
+                TextView tvQuestion = (TextView) findViewById(R.id.tvQuestion);
+                tvQuestion.setText(getSaying());
+
+                int shake_axis = 0;
+                if (x > last_x)
+                    shake_axis = 0;
+                else if (y > last_y)
+                    shake_axis = 1;
+
+                //shake the background
+                if (shake_axis == 0)
+                    findViewById(R.id.imageView).startAnimation(AnimationUtils.loadAnimation(this, R.anim.shake_x));
+                else if (shake_axis == 1)
+                    findViewById(R.id.imageView).startAnimation(AnimationUtils.loadAnimation(this, R.anim.shake_y));
+
+                //fade in the view
+                AlphaAnimation fade = new AlphaAnimation(0, 1);
+                fade.setStartOffset(1000);
+                fade.setDuration(1000);
+                tvQuestion.startAnimation(fade);
 
                 long diffTime = (curTime - lastUpdate);
                 lastUpdate = curTime;
@@ -127,15 +145,19 @@ public class MainActivity extends Activity implements SensorEventListener {
             allGroups.moveToNext();
         }
 
+        if (checkedGroups.size() == 0) {
+            return "Bitte erst Gruppe/n wählen";
+        }
+
         //sprüche ermitteln
         Cursor claims = mDbHelper.getClaims(checkedGroups);
         mDbHelper.close();
 
         //random nummer ermitteln
-        int randomNumber = (int) (StrictMath.random() * claims.getCount());
+        int randomNumber = (int) (Math.random() * (claims.getCount() + 1));
 
         //cursor an die stelle der randomnummer springen
-        claims.moveToPosition(randomNumber - 1);
+        claims.moveToPosition(randomNumber);
 
         //spruch rückgabe
         return DatabaseHelper.GetColumnValue(claims, "VALUE");
