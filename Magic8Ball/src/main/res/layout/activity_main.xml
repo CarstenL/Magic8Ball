@@ -4,23 +4,25 @@
         android:layout_height="match_parent"
         android:background="#0099cc">
 
-    <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:text="@string/TV_Question"
-            android:id="@+id/tvQuestion"
-            android:singleLine="true"
-            android:layout_marginBottom="14dp"
-            android:layout_above="@+id/imageView"
-            android:layout_centerHorizontal="true"/>
-
     <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/imageView"
-            android:src="@drawable/ic_launcher"
-            android:layout_centerVertical="true"
-            android:layout_centerHorizontal="true"/>
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:src="@drawable/magic_eight_ball"/>
+
+    <TextView
+            android:layout_width="195dp"
+            android:layout_height="wrap_content"
+            android:text="@string/TV_Question"
+            android:id="@+id/tvQuestion"
+            android:textSize="15dp"
+            android:textColor="#ffffff"
+            android:gravity="center"
+            android:layout_centerInParent="true"
+            android:minLines="4"
+            android:maxLines="4"
+            android:singleLine="false"/>
 
 </RelativeLayout>
