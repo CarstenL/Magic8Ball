@@ -3,6 +3,7 @@ package com.magic8ball;
 
 import android.app.Activity;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -40,8 +41,8 @@ public class Group extends Activity {
             CheckBox checkBox = new CheckBox(this);
             checkBox.setText(name);
             checkBox.setTextSize(25);
-            checkBox.setLeft(5);
-            checkBox.setTop(5);
+            checkBox.setButtonDrawable(R.drawable.btn_check);
+
             //konfiguration laden --> setzt checkbox.isChecked()
             checkBox.setChecked(settings.LoadPreferences(name));
             ll.addView(checkBox);
@@ -53,8 +54,6 @@ public class Group extends Activity {
         Button button = new Button(this);
         button.setText("Gruppen speichern");
         button.setTextSize(25);
-        button.setLeft(5);
-        button.setTop(5);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
