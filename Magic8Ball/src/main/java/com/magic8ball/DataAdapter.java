@@ -65,7 +65,7 @@ public class DataAdapter {
                 if (whereClause == "")
                     whereClause = "NAME like '" + group + "'";
                 else
-                    whereClause += " and NAME like '" + group + "'";
+                    whereClause += " or NAME like '" + group + "'";
             }
 
             String sql = "Select VALUE from CLAIM c inner join CLAIM_GROUP cg on c.id = cg.id_claim inner join groups g on cg.id_group = g.id where " + whereClause;
