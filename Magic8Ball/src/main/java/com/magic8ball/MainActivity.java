@@ -9,13 +9,16 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.AnimationUtils;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.magic8ball.util.SystemUiHider;
 
@@ -35,8 +38,6 @@ public class MainActivity extends Activity implements SensorEventListener {
     private float last_x = 0;
     private float last_y = 0;
     private float last_z = 0;
-    private float interval = 150;
-    private float threshold = 1500;
     private long lastUpdate;
 
     @Override
@@ -75,18 +76,21 @@ public class MainActivity extends Activity implements SensorEventListener {
 
         if ((curTime - lastUpdate) > 2000) {
 
+            float interval = 150;
             float speed = StrictMath.abs(x + y + z - last_x - last_y - last_z) / interval * 10000;
+            float threshold = 1500;
             if (speed > threshold) {
-
                 //load the message text to the view
                 TextView tvQuestion = (TextView) findViewById(R.id.tvQuestion);
                 tvQuestion.setText(getSaying());
 
-                int shake_axis = 0;
-                if (x > last_x)
+                int shake_axis;
+                if ((x - last_x) > (y - last_y))
                     shake_axis = 0;
-                else if (y > last_y)
+                else
                     shake_axis = 1;
+
+                vibrator.vibrate(1000);
 
                 //shake the background
                 if (shake_axis == 0)
@@ -94,16 +98,13 @@ public class MainActivity extends Activity implements SensorEventListener {
                 else if (shake_axis == 1)
                     findViewById(R.id.imageView).startAnimation(AnimationUtils.loadAnimation(this, R.anim.shake_y));
 
+                lastUpdate = curTime;
+
                 //fade in the view
                 AlphaAnimation fade = new AlphaAnimation(0, 1);
                 fade.setStartOffset(1000);
                 fade.setDuration(1000);
                 tvQuestion.startAnimation(fade);
-
-                long diffTime = (curTime - lastUpdate);
-                lastUpdate = curTime;
-
-                vibrator.vibrate(200);
             }
         } else {
             last_x = x;
@@ -155,6 +156,10 @@ public class MainActivity extends Activity implements SensorEventListener {
 
         //random nummer ermitteln
         int randomNumber = (int) (Math.random() * (claims.getCount() + 1));
+
+        //verhindert leere Ausgabe
+        if (randomNumber == claims.getCount())
+            randomNumber--;
 
         //cursor an die stelle der randomnummer springen
         claims.moveToPosition(randomNumber);
